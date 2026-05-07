@@ -16,7 +16,7 @@ from sklearn.metrics import accuracy_score, classification_report, confusion_mat
 
 st.title("Vehicle Classification ML Project")
 
-st.write("Machine Learning based Vehicle Type Prediction System")
+st.write("Machine Learning based Car Category Prediction System")
 
 # -------------------------------
 # LOAD DATASET
@@ -47,33 +47,56 @@ df_cars = df_cars.dropna(subset=['Engine Capacity'])
 
 # -------------------------------
 # CREATE DATASETS
+# (New features: Engine Capacity, Horsepower, 0-100 Performance, Fuel Type encoded)
+# Target: Car Category (Economy, SUV, Sports, Electric, Luxury)
 # -------------------------------
 
 np.random.seed(42)
 
-four_wheelers = pd.DataFrame({
+# Fuel type encoding: Petrol=0, Diesel=1, Electric=2, Hybrid=3
+
+economy_cars = pd.DataFrame({
+    'Engine Capacity': np.random.uniform(800, 1400, 100),
+    'Horsepower': np.random.uniform(60, 110, 100),
+    'Performance (0-100s)': np.random.uniform(10, 16, 100),
+    'Fuel Type': np.random.choice([0, 1], 100),          # Petrol or Diesel
+    'Car Category': 'Economy'
+})
+
+suv_cars = pd.DataFrame({
+    'Engine Capacity': np.random.uniform(1500, 3000, 100),
+    'Horsepower': np.random.uniform(130, 250, 100),
+    'Performance (0-100s)': np.random.uniform(7, 12, 100),
+    'Fuel Type': np.random.choice([0, 1, 3], 100),       # Petrol, Diesel, Hybrid
+    'Car Category': 'SUV'
+})
+
+sports_cars = pd.DataFrame({
     'Engine Capacity': df_cars['Engine Capacity'].sample(100, replace=True).values,
-    'Number of Wheels': 4,
-    'Weight (kg)': np.random.uniform(1000, 2500, 100),
-    'Vehicle Type': 'four-wheeler'
+    'Horsepower': np.random.uniform(300, 700, 100),
+    'Performance (0-100s)': np.random.uniform(2.5, 6, 100),
+    'Fuel Type': np.random.choice([0], 100),              # Petrol only
+    'Car Category': 'Sports'
 })
 
-two_wheelers = pd.DataFrame({
-    'Engine Capacity': np.random.uniform(50, 400, 100),
-    'Number of Wheels': 2,
-    'Weight (kg)': np.random.uniform(100, 250, 100),
-    'Vehicle Type': 'two-wheeler'
+electric_cars = pd.DataFrame({
+    'Engine Capacity': np.random.uniform(40000, 100000, 100),  # Battery in Wh equivalent
+    'Horsepower': np.random.uniform(150, 500, 100),
+    'Performance (0-100s)': np.random.uniform(3, 8, 100),
+    'Fuel Type': np.full(100, 2),                         # Electric only
+    'Car Category': 'Electric'
 })
 
-three_wheelers = pd.DataFrame({
-    'Engine Capacity': np.random.uniform(150, 600, 100),
-    'Number of Wheels': 3,
-    'Weight (kg)': np.random.uniform(300, 600, 100),
-    'Vehicle Type': 'three-wheeler'
+luxury_cars = pd.DataFrame({
+    'Engine Capacity': np.random.uniform(2000, 6000, 100),
+    'Horsepower': np.random.uniform(250, 600, 100),
+    'Performance (0-100s)': np.random.uniform(4, 8, 100),
+    'Fuel Type': np.random.choice([0, 3], 100),           # Petrol or Hybrid
+    'Car Category': 'Luxury'
 })
 
 dataset = pd.concat(
-    [two_wheelers, three_wheelers, four_wheelers],
+    [economy_cars, suv_cars, sports_cars, electric_cars, luxury_cars],
     ignore_index=True
 )
 
@@ -81,9 +104,9 @@ dataset = pd.concat(
 # PREPROCESSING
 # -------------------------------
 
-X = dataset[['Engine Capacity', 'Number of Wheels', 'Weight (kg)']]
+X = dataset[['Engine Capacity', 'Horsepower', 'Performance (0-100s)', 'Fuel Type']]
 
-y = dataset['Vehicle Type']
+y = dataset['Car Category']
 
 le = LabelEncoder()
 
@@ -147,10 +170,10 @@ dataset['Target'] = y_encoded
 
 pairplot = sns.pairplot(
     dataset,
-    vars=['Engine Capacity', 'Weight (kg)', 'Number of Wheels'],
-    hue='Vehicle Type',
-    palette=['red', 'green', 'blue'],
-    markers=["o", "s", "D"]
+    vars=['Engine Capacity', 'Horsepower', 'Performance (0-100s)'],
+    hue='Car Category',
+    palette=['red', 'green', 'blue', 'orange', 'purple'],
+    markers=["o", "s", "D", "^", "v"]
 )
 
 st.pyplot(pairplot.fig)
@@ -165,25 +188,25 @@ fig = plt.figure(figsize=(10, 8))
 
 ax = fig.add_subplot(111, projection='3d')
 
-colors = ['r', 'g', 'b']
+colors = ['r', 'g', 'b', 'orange', 'purple']
 
 for i, t in enumerate(le.classes_):
 
-    idx = (dataset['Vehicle Type'] == t)
+    idx = (dataset['Car Category'] == t)
 
     ax.scatter(
         dataset.loc[idx, 'Engine Capacity'],
-        dataset.loc[idx, 'Weight (kg)'],
-        dataset.loc[idx, 'Number of Wheels'],
+        dataset.loc[idx, 'Horsepower'],
+        dataset.loc[idx, 'Performance (0-100s)'],
         c=colors[i],
         label=t,
         s=50,
         alpha=0.7
     )
 
-ax.set_xlabel('Engine Capacity (cc)')
-ax.set_ylabel('Weight (kg)')
-ax.set_zlabel('Number of Wheels')
+ax.set_xlabel('Engine Capacity (cc / Wh)')
+ax.set_ylabel('Horsepower (hp)')
+ax.set_zlabel('0-100 km/h Time (s)')
 
 ax.set_title('3D Feature Distribution')
 
@@ -237,27 +260,34 @@ st.pyplot(fig2)
 # USER PREDICTION SECTION
 # -------------------------------
 
-st.subheader("Predict Vehicle Type")
+st.subheader("Predict Car Category")
 
 engine = st.number_input(
-    "Engine Capacity",
+    "Engine Capacity (cc for petrol/diesel, Wh for electric)",
     min_value=0.0
 )
 
-wheels = st.number_input(
-    "Number of Wheels",
-    min_value=2
-)
-
-weight = st.number_input(
-    "Weight (kg)",
+horsepower = st.number_input(
+    "Horsepower (hp)",
     min_value=0.0
 )
+
+performance = st.number_input(
+    "0-100 km/h Time (seconds)",
+    min_value=0.0
+)
+
+fuel_type = st.selectbox(
+    "Fuel Type",
+    options=["Petrol", "Diesel", "Electric", "Hybrid"]
+)
+
+fuel_map = {"Petrol": 0, "Diesel": 1, "Electric": 2, "Hybrid": 3}
 
 if st.button("Predict"):
 
     input_data = scaler.transform(
-        [[engine, wheels, weight]]
+        [[engine, horsepower, performance, fuel_map[fuel_type]]]
     )
 
     prediction = svm_model.predict(input_data)
@@ -265,5 +295,5 @@ if st.button("Predict"):
     predicted_label = le.inverse_transform(prediction)
 
     st.success(
-        f"Predicted Vehicle Type: {predicted_label[0]}"
+        f"Predicted Car Category: {predicted_label[0]}"
     )
