@@ -1,6 +1,7 @@
-numpy
+streamlit
 pandas
+numpy
 matplotlib
 seaborn
 scikit-learn
-streamlit
+itertools
