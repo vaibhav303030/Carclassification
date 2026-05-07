@@ -284,6 +284,33 @@ fuel_type = st.selectbox(
 
 fuel_map = {"Petrol": 0, "Diesel": 1, "Electric": 2, "Hybrid": 3}
 
+# -------------------------------
+# CAR EXAMPLES PER CATEGORY (from dataset)
+# -------------------------------
+
+category_keywords = {
+    'Economy': ['alto', 'i10', 'santro', 'nano', 'eon', 'kwid', 'celerio', 'wagon', 'swift', 'beat', 'spark', 'brio', 'gio', 'micra', 'pulse'],
+    'SUV':     ['creta', 'scorpio', 'fortuner', 'brezza', 'ecosport', 'duster', 'xuv', 'compass', 'harrier', 'seltos', 'hector', 'thar', 'bolero', 'safari', 'tucson', 'suv'],
+    'Sports':  ['mustang', 'camaro', 'bmw m', 'ferrari', 'porsche', 'lamborghini', 'audi r', 'corvette', 'gt', 'amg', 'sport'],
+    'Electric': ['ev', 'electric', 'nexon ev', 'zs ev', 'e-tron', 'model', 'leaf', 'bolt', 'ioniq', 'atto'],
+    'Luxury':  ['mercedes', 'bmw', 'audi', 'jaguar', 'volvo', 'lexus', 'land rover', 'bentley', 'rolls', 'maserati', 'genesis', 'lincoln']
+}
+
+def get_examples_from_dataset(df, category, n=5):
+    keywords = category_keywords.get(category, [])
+    # Try to find car name column
+    name_col = None
+    for col in df.columns:
+        if any(k in col.lower() for k in ['name', 'model', 'car', 'brand', 'make']):
+            name_col = col
+            break
+    if name_col is None:
+        return []
+    matches = df[df[name_col].astype(str).str.lower().str.contains('|'.join(keywords), na=False)]
+    if len(matches) > 0:
+        return matches[name_col].dropna().unique()[:n].tolist()
+    return []
+
 if st.button("Predict"):
 
     input_data = scaler.transform(
@@ -294,6 +321,28 @@ if st.button("Predict"):
 
     predicted_label = le.inverse_transform(prediction)
 
+    category = predicted_label[0]
+
     st.success(
-        f"Predicted Car Category: {predicted_label[0]}"
+        f"Predicted Car Category: {category}"
     )
+
+    # Show example cars from dataset
+    st.subheader(f"Example {category} Cars from Dataset")
+
+    examples = get_examples_from_dataset(df_cars, category, n=5)
+
+    if examples:
+        for car in examples:
+            st.write(f"🚗 {car}")
+    else:
+        # Fallback hardcoded examples if dataset has no matching names
+        fallback = {
+            'Economy':  ['Maruti Alto', 'Hyundai i10', 'Tata Nano', 'Renault Kwid', 'Chevrolet Beat'],
+            'SUV':      ['Hyundai Creta', 'Mahindra Scorpio', 'Toyota Fortuner', 'Kia Seltos', 'MG Hector'],
+            'Sports':   ['Ford Mustang', 'BMW M3', 'Porsche 911', 'Audi TT', 'Chevrolet Camaro'],
+            'Electric': ['Tata Nexon EV', 'MG ZS EV', 'Tesla Model 3', 'Hyundai Ioniq', 'Nissan Leaf'],
+            'Luxury':   ['Mercedes E-Class', 'BMW 7 Series', 'Audi A8', 'Jaguar XF', 'Volvo S90']
+        }
+        for car in fallback.get(category, []):
+            st.write(f"🚗 {car}")
