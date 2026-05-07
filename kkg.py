@@ -11,7 +11,7 @@ import pandas as pd
 import numpy as np
 
 # 1. Load the provided dataset
-df_cars = pd.read_csv('/content/Cars Datasets 2025.csv', encoding='latin1')
+df_cars = pd.read_csv('Cars Datasets 2025.csv', encoding='latin1')
 
 # 2. Clean the 'CC/Battery Capacity' column to extract numeric Engine Capacity
 def extract_cc(x):
