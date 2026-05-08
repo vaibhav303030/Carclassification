@@ -24,18 +24,16 @@ st.set_page_config(
 )
 
 # ─────────────────────────────────────────
-# CUSTOM CSS  (dark theme matching screenshots)
+# CUSTOM CSS  (dark theme)
 # ─────────────────────────────────────────
 
 st.markdown("""
 <style>
-/* ── global ── */
 html, body, [class*="css"] {
     font-family: 'DM Sans', sans-serif;
     background-color: #0d0f1a;
     color: #e8eaf0;
 }
-/* ── header ── */
 .hero-badge {
     display: inline-flex; align-items: center; gap: 8px;
     background: #ffffff0a; border: 1px solid #ffffff18;
@@ -51,7 +49,6 @@ html, body, [class*="css"] {
     background: linear-gradient(135deg,#7c6ff7,#f97316);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
-/* ── stat cards ── */
 .stat-row { display: flex; gap: 16px; margin: 20px 0 32px; }
 .stat-card {
     background: #1a1e35; border: 1px solid #ffffff18;
@@ -60,28 +57,50 @@ html, body, [class*="css"] {
 .stat-label { font-size: 11px; color: #8892a4; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }
 .stat-val   { font-size: 22px; font-weight: 700; }
 .accent     { color: #7c6ff7; }
-/* ── section cards ── */
 .section-card {
     background: #131629; border: 1px solid #ffffff18;
     border-radius: 16px; padding: 28px 32px; margin-bottom: 28px;
 }
 .section-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
 .section-sub   { color: #8892a4; font-size: 13px; margin-bottom: 20px; }
-/* ── result box ── */
 .result-success {
     background: #131629; border: 1px solid #7c6ff740;
     border-radius: 12px; padding: 20px 24px; margin-top: 20px;
 }
 .result-cat { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
-/* ── model table ── */
 .model-table { width: 100%; border-collapse: collapse; }
 .model-table th { font-size: 11px; color: #8892a4; text-transform: uppercase; letter-spacing: .1em; padding: 0 0 12px; text-align: left; }
 .model-table td { padding: 14px 0; border-top: 1px solid #ffffff18; font-size: 14px; }
 .model-table td:first-child { font-weight: 600; }
 .badge-live    { background: #22d3ee18; color: #22d3ee; border: 1px solid #22d3ee40; border-radius: 20px; padding: 4px 12px; font-size: 12px; }
 .badge-trained { background: #ffffff0a; color: #8892a4; border: 1px solid #ffffff18; border-radius: 20px; padding: 4px 12px; font-size: 12px; }
-/* ── stMetric override ── */
 [data-testid="stMetricValue"] { color: #7c6ff7 !important; font-size: 1.5rem !important; }
+
+/* ── Project Info Card ── */
+.project-card {
+    background: linear-gradient(135deg, #1a1e35 0%, #131629 100%);
+    border: 1px solid #7c6ff740;
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 28px;
+}
+.project-card h2 {
+    font-size: 18px; font-weight: 700; color: #7c6ff7;
+    margin-bottom: 12px; letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+.project-desc {
+    color: #c5cad8; font-size: 14px; line-height: 1.8;
+    margin-bottom: 20px;
+}
+.project-meta {
+    display: flex; gap: 32px; flex-wrap: wrap;
+    border-top: 1px solid #ffffff18; padding-top: 16px;
+}
+.meta-item { display: flex; flex-direction: column; gap: 4px; }
+.meta-label { font-size: 10px; color: #8892a4; text-transform: uppercase; letter-spacing: .12em; }
+.meta-value { font-size: 14px; font-weight: 600; color: #e8eaf0; }
+.meta-value span { color: #7c6ff7; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -203,6 +222,46 @@ st.markdown("""
 Enter your car's specs and our ML model will instantly identify which of the
 <strong style="color:#e8eaf0">5 categories</strong> it belongs to.
 </p>
+""", unsafe_allow_html=True)
+
+# ─────────────────────────────────────────
+# PROJECT INFO CARD
+# ─────────────────────────────────────────
+
+st.markdown("""
+<div class="project-card">
+    <h2>📋 About This Project</h2>
+    <p class="project-desc">
+        This project presents an intelligent vehicle classification system built using supervised machine learning algorithms —
+        Support Vector Machine (SVM), K-Nearest Neighbors (KNN), and Decision Tree — trained on a synthetic dataset derived
+        from the Cars Dataset 2025. The system classifies any vehicle into one of five categories (Economy, SUV, Sports,
+        Electric, or Luxury) based on engine capacity, horsepower, fuel type, and acceleration performance.
+        The interactive dashboard enables real-time prediction, model comparison, and in-depth visual analysis of feature
+        distributions and confusion matrices, making it a comprehensive end-to-end ML application.
+    </p>
+    <div class="project-meta">
+        <div class="meta-item">
+            <span class="meta-label">Submitted By</span>
+            <span class="meta-value"><span>Krishna Gavhane</span></span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Guided By</span>
+            <span class="meta-value">[ To Be Filled ]</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Dataset</span>
+            <span class="meta-value">Cars Dataset 2025</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Models Used</span>
+            <span class="meta-value">SVM · KNN · Decision Tree</span>
+        </div>
+        <div class="meta-item">
+            <span class="meta-label">Categories</span>
+            <span class="meta-value">5 Vehicle Classes</span>
+        </div>
+    </div>
+</div>
 """, unsafe_allow_html=True)
 
 c1, c2, c3 = st.columns(3)
@@ -421,11 +480,16 @@ with tab_analysis:
         plt.close(fig)
 
     # ── Pairplot ──
+    # FIX: In newer pandas (2.x+), groupby().apply() drops the grouping column
+    # from the result. We use a list comprehension instead to preserve 'Car Category'.
     elif analysis_tab == "Pairplot":
         st.markdown("#### Pairwise Feature Relationships")
-        sample_ds = dataset.groupby('Car Category').apply(
-            lambda x: x.sample(min(60, len(x)), random_state=42)
-        ).reset_index(drop=True)
+
+        sample_ds = pd.concat([
+            grp.sample(min(60, len(grp)), random_state=42)
+            for _, grp in dataset.groupby('Car Category')
+        ]).reset_index(drop=True)
+
         pp = sns.pairplot(
             sample_ds,
             vars=['Engine Capacity', 'Horsepower', 'Performance (0-100s)'],
