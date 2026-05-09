@@ -49,15 +49,9 @@ html, body, [class*="css"] {
 
 # ─────────────────────────────────────────
 # FETCH REAL CAR DATA FROM CARQUERY API
-# Free API — no key required
-# Cached for 24 hours (ttl=86400)
 # ─────────────────────────────────────────
 @st.cache_data(ttl=86400, show_spinner="🌐 Fetching live car data from CarQuery API…")
 def fetch_car_data():
-    """
-    Pulls engine displacement (cc) and horsepower from CarQuery API
-    across multiple popular makes. Returns a clean DataFrame.
-    """
     makes = ["Toyota", "Honda", "Ford", "BMW", "Mercedes-Benz",
              "Audi", "Tesla", "Hyundai", "Kia", "Porsche",
              "Ferrari", "Lamborghini", "Maruti", "Tata", "Mahindra"]
@@ -73,7 +67,6 @@ def fetch_car_data():
                         "year": 2020, "full_results": 1},
                 timeout=10
             )
-            # CarQuery wraps JSON in a JSONP callback — strip it
             text = resp.text.strip()
             if text.startswith("?("):
                 text = text[2:-1]
@@ -81,7 +74,6 @@ def fetch_car_data():
                 text = text[3:-1]
 
             import json, re
-            # Try stripping any jsonp wrapper
             json_match = re.search(r'\{.*\}', text, re.DOTALL)
             if not json_match:
                 continue
@@ -97,7 +89,7 @@ def fetch_car_data():
                     if disp > 0 and hp > 0:
                         records.append({
                             "Engine Capacity": disp,
-                            "Horsepower":      hp * 0.9863,   # PS → HP
+                            "Horsepower":      hp * 0.9863,
                             "Fuel Type":       fuel,
                             "Acceleration":    accel if accel > 0 else np.nan,
                             "Make":            trim.get("make_display", make),
@@ -109,12 +101,10 @@ def fetch_car_data():
             continue
 
     if not records:
-        # Fallback: hardcoded realistic values if API is down
         return _fallback_data()
 
     df = pd.DataFrame(records)
 
-    # Map fuel string → integer code used by the model
     fuel_map = {"gasoline": 0, "petrol": 0, "diesel": 1,
                 "electric": 2, "hybrid": 3, "plug-in hybrid": 3}
     df["Fuel Code"] = df["Fuel Type"].map(
@@ -124,32 +114,31 @@ def fetch_car_data():
 
 
 def _fallback_data():
-    """Returned only if CarQuery API is completely unreachable."""
     rows = [
-        {"Engine Capacity": 1197,  "Horsepower": 82,  "Fuel Type": "gasoline", "Acceleration": 13.5, "Make": "Maruti",  "Model": "Alto",      "Fuel Code": 0},
-        {"Engine Capacity": 998,   "Horsepower": 67,  "Fuel Type": "gasoline", "Acceleration": 14.2, "Make": "Hyundai", "Model": "i10",       "Fuel Code": 0},
-        {"Engine Capacity": 1498,  "Horsepower": 115, "Fuel Type": "diesel",   "Acceleration": 10.5, "Make": "Honda",   "Model": "City",      "Fuel Code": 1},
-        {"Engine Capacity": 1995,  "Horsepower": 190, "Fuel Type": "diesel",   "Acceleration": 9.2,  "Make": "Hyundai", "Model": "Creta",     "Fuel Code": 1},
-        {"Engine Capacity": 2000,  "Horsepower": 197, "Fuel Type": "diesel",   "Acceleration": 9.0,  "Make": "Kia",     "Model": "Seltos",    "Fuel Code": 1},
-        {"Engine Capacity": 5000,  "Horsepower": 450, "Fuel Type": "gasoline", "Acceleration": 4.2,  "Make": "Ford",    "Model": "Mustang",   "Fuel Code": 0},
-        {"Engine Capacity": 3000,  "Horsepower": 503, "Fuel Type": "gasoline", "Acceleration": 3.8,  "Make": "BMW",     "Model": "M3",        "Fuel Code": 0},
-        {"Engine Capacity": 3996,  "Horsepower": 494, "Fuel Type": "gasoline", "Acceleration": 3.5,  "Make": "Porsche", "Model": "911",       "Fuel Code": 0},
-        {"Engine Capacity": 75000, "Horsepower": 283, "Fuel Type": "electric", "Acceleration": 5.6,  "Make": "Tesla",   "Model": "Model 3",   "Fuel Code": 2},
-        {"Engine Capacity": 82000, "Horsepower": 670, "Fuel Type": "electric", "Acceleration": 2.9,  "Make": "Tesla",   "Model": "Model S",   "Fuel Code": 2},
-        {"Engine Capacity": 3000,  "Horsepower": 340, "Fuel Type": "gasoline", "Acceleration": 6.0,  "Make": "BMW",     "Model": "5 Series",  "Fuel Code": 0},
-        {"Engine Capacity": 2996,  "Horsepower": 286, "Fuel Type": "gasoline", "Acceleration": 6.4,  "Make": "Audi",    "Model": "A6",        "Fuel Code": 0},
-        {"Engine Capacity": 3982,  "Horsepower": 710, "Fuel Type": "gasoline", "Acceleration": 3.0,  "Make": "Ferrari", "Model": "F8",        "Fuel Code": 0},
-        {"Engine Capacity": 5204,  "Horsepower": 770, "Fuel Type": "gasoline", "Acceleration": 2.8,  "Make": "Lamborghini","Model": "Huracan","Fuel Code": 0},
-        {"Engine Capacity": 2993,  "Horsepower": 258, "Fuel Type": "diesel",   "Acceleration": 7.5,  "Make": "Toyota",  "Model": "Fortuner",  "Fuel Code": 1},
+        {"Engine Capacity": 1197,  "Horsepower": 82,  "Fuel Type": "gasoline", "Acceleration": 13.5, "Make": "Maruti",      "Model": "Alto",     "Fuel Code": 0},
+        {"Engine Capacity": 998,   "Horsepower": 67,  "Fuel Type": "gasoline", "Acceleration": 14.2, "Make": "Hyundai",     "Model": "i10",      "Fuel Code": 0},
+        {"Engine Capacity": 1498,  "Horsepower": 115, "Fuel Type": "diesel",   "Acceleration": 10.5, "Make": "Honda",       "Model": "City",     "Fuel Code": 1},
+        {"Engine Capacity": 1995,  "Horsepower": 190, "Fuel Type": "diesel",   "Acceleration": 9.2,  "Make": "Hyundai",     "Model": "Creta",    "Fuel Code": 1},
+        {"Engine Capacity": 2000,  "Horsepower": 197, "Fuel Type": "diesel",   "Acceleration": 9.0,  "Make": "Kia",         "Model": "Seltos",   "Fuel Code": 1},
+        {"Engine Capacity": 5000,  "Horsepower": 450, "Fuel Type": "gasoline", "Acceleration": 4.2,  "Make": "Ford",        "Model": "Mustang",  "Fuel Code": 0},
+        {"Engine Capacity": 3000,  "Horsepower": 503, "Fuel Type": "gasoline", "Acceleration": 3.8,  "Make": "BMW",         "Model": "M3",       "Fuel Code": 0},
+        {"Engine Capacity": 3996,  "Horsepower": 494, "Fuel Type": "gasoline", "Acceleration": 3.5,  "Make": "Porsche",     "Model": "911",      "Fuel Code": 0},
+        {"Engine Capacity": 75000, "Horsepower": 283, "Fuel Type": "electric", "Acceleration": 5.6,  "Make": "Tesla",       "Model": "Model 3",  "Fuel Code": 2},
+        {"Engine Capacity": 82000, "Horsepower": 670, "Fuel Type": "electric", "Acceleration": 2.9,  "Make": "Tesla",       "Model": "Model S",  "Fuel Code": 2},
+        {"Engine Capacity": 3000,  "Horsepower": 340, "Fuel Type": "gasoline", "Acceleration": 6.0,  "Make": "BMW",         "Model": "5 Series", "Fuel Code": 0},
+        {"Engine Capacity": 2996,  "Horsepower": 286, "Fuel Type": "gasoline", "Acceleration": 6.4,  "Make": "Audi",        "Model": "A6",       "Fuel Code": 0},
+        {"Engine Capacity": 3982,  "Horsepower": 710, "Fuel Type": "gasoline", "Acceleration": 3.0,  "Make": "Ferrari",     "Model": "F8",       "Fuel Code": 0},
+        {"Engine Capacity": 5204,  "Horsepower": 770, "Fuel Type": "gasoline", "Acceleration": 2.8,  "Make": "Lamborghini", "Model": "Huracan",  "Fuel Code": 0},
+        {"Engine Capacity": 2993,  "Horsepower": 258, "Fuel Type": "diesel",   "Acceleration": 7.5,  "Make": "Toyota",      "Model": "Fortuner", "Fuel Code": 1},
     ]
     return pd.DataFrame(rows)
 
 
 df_api = fetch_car_data()
 
+
 # ─────────────────────────────────────────
-# BUILD TRAINING DATASET FROM API DATA
-# Uses real engine CC values as seed
+# BUILD TRAINING DATASET
 # ─────────────────────────────────────────
 @st.cache_data(show_spinner=False)
 def build_dataset(engine_vals_tuple):
@@ -219,7 +208,7 @@ X_test_sc  = scaler.transform(X_test)
 
 
 # ─────────────────────────────────────────
-# MODELS — saved to disk, never retrained
+# MODELS
 # ─────────────────────────────────────────
 import joblib
 
@@ -262,15 +251,17 @@ svm_acc, knn_acc, dt_acc = compute_accuracies()
 # ─────────────────────────────────────────
 # HERO
 # ─────────────────────────────────────────
+n_cars = len(df_api)
+
 st.markdown(f"""
 <div class="hero-title">Vehicle <span class="hero-grad">Classifier</span></div>
 <p style="color:#8892a4;font-size:14px;margin-bottom:6px;">
   🌐 Live data from <strong style="color:#7c6ff7">CarQuery API</strong> —
-  {len(df_api)} real car trims fetched &nbsp;·&nbsp; No CSV needed
+  {n_cars} real car trims fetched &nbsp;·&nbsp; No CSV needed
 </p>
 """, unsafe_allow_html=True)
 
-st.markdown("""
+st.markdown(f"""
 <div class="project-card">
     <h2>📋 About This Project</h2>
     <p class="project-desc">
@@ -295,11 +286,11 @@ st.markdown("""
         </div>
         <div class="meta-item">
             <span class="meta-label">Live Trims</span>
-            <span class="meta-value"><span>{len(df_api)}</span> cars fetched</span>
+            <span class="meta-value"><span>{n_cars}</span> cars fetched</span>
         </div>
     </div>
 </div>
-""".format(len=len), unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 c1, c2, c3 = st.columns(3)
 with c1: st.metric("SVM (Linear)", f"{svm_acc*100:.2f}%")
@@ -371,10 +362,12 @@ with tab_classify:
             ax_prob.text(bar.get_width()+0.5, bar.get_y()+bar.get_height()/2,
                          f'{val:.1f}%', va='center', color='#8892a4', fontsize=10)
         ax_prob.set_xlabel('Confidence (%)', color='#8892a4')
-        ax_prob.tick_params(colors='#8892a4'); ax_prob.spines[:].set_visible(False); ax_prob.set_xlim(0,110)
-        st.pyplot(fig_prob, use_container_width=True); plt.close(fig_prob)
+        ax_prob.tick_params(colors='#8892a4')
+        ax_prob.spines[:].set_visible(False)
+        ax_prob.set_xlim(0, 110)
+        st.pyplot(fig_prob, use_container_width=True)
+        plt.close(fig_prob)
 
-        # Show matching real cars from API data
         st.markdown(f"**Real {predicted} cars from CarQuery API:**")
         category_filter = {
             'Economy':  (df_api['Engine Capacity'] < 1400) & (df_api['Horsepower'] < 120),
@@ -410,7 +403,10 @@ with tab_models:
 
 # ═══════════════ TAB 3 — ANALYSIS ═══════════════
 with tab_analysis:
-    dark_bg='#0d0f1a'; card_bg='#131629'; text_col='#e8eaf0'; muted_col='#8892a4'
+    dark_bg  = '#0d0f1a'
+    card_bg  = '#131629'
+    text_col = '#e8eaf0'
+    muted_col= '#8892a4'
 
     def style_ax(ax):
         ax.set_facecolor(card_bg); ax.tick_params(colors=muted_col)
@@ -424,78 +420,128 @@ with tab_analysis:
     ])
 
     if analysis_tab == "Feature Distributions":
-        import matplotlib.pyplot as plt, matplotlib.patches as mpatches
-        fig, axes = plt.subplots(1, 3, figsize=(14, 4)); fig.patch.set_facecolor(dark_bg)
+        import matplotlib.pyplot as plt
+        import matplotlib.patches as mpatches
+        fig, axes = plt.subplots(1, 3, figsize=(14, 4))
+        fig.patch.set_facecolor(dark_bg)
         for ax, feat in zip(axes, ['Engine Capacity','Horsepower','Performance (0-100s)']):
             for cat, color in cat_colors.items():
-                ax.hist(dataset[dataset['Car Category']==cat][feat], bins=20, alpha=0.6, color=color, edgecolor='none', density=True)
-            style_ax(ax); ax.set_title(feat,fontsize=11); ax.set_xlabel(feat,fontsize=10); ax.set_ylabel('Density',fontsize=10)
-        handles=[mpatches.Patch(color=c,label=l) for l,c in cat_colors.items()]
-        fig.legend(handles=handles,loc='lower center',ncol=5,framealpha=0,labelcolor=text_col,fontsize=10,bbox_to_anchor=(0.5,-0.15))
-        plt.tight_layout(); st.pyplot(fig, use_container_width=True); plt.close(fig)
+                ax.hist(dataset[dataset['Car Category']==cat][feat], bins=20,
+                        alpha=0.6, color=color, edgecolor='none', density=True)
+            style_ax(ax)
+            ax.set_title(feat, fontsize=11)
+            ax.set_xlabel(feat, fontsize=10)
+            ax.set_ylabel('Density', fontsize=10)
+        handles = [mpatches.Patch(color=c, label=l) for l, c in cat_colors.items()]
+        fig.legend(handles=handles, loc='lower center', ncol=5, framealpha=0,
+                   labelcolor=text_col, fontsize=10, bbox_to_anchor=(0.5, -0.15))
+        plt.tight_layout()
+        st.pyplot(fig, use_container_width=True)
+        plt.close(fig)
 
     elif analysis_tab == "Pairplot":
-        import matplotlib.pyplot as plt, seaborn as sns
-        sample_ds = pd.concat([grp.sample(min(60,len(grp)),random_state=42) for _,grp in dataset.groupby('Car Category')]).reset_index(drop=True)
-        pp = sns.pairplot(sample_ds, vars=['Engine Capacity','Horsepower','Performance (0-100s)'],
-                          hue='Car Category', palette=cat_colors, plot_kws={'alpha':0.6,'s':20}, diag_kws={'alpha':0.5})
+        import matplotlib.pyplot as plt
+        import seaborn as sns
+        sample_ds = pd.concat([
+            grp.sample(min(60, len(grp)), random_state=42)
+            for _, grp in dataset.groupby('Car Category')
+        ]).reset_index(drop=True)
+        pp = sns.pairplot(sample_ds,
+                          vars=['Engine Capacity','Horsepower','Performance (0-100s)'],
+                          hue='Car Category', palette=cat_colors,
+                          plot_kws={'alpha': 0.6, 's': 20}, diag_kws={'alpha': 0.5})
         pp.fig.patch.set_facecolor(dark_bg)
         for ax in pp.axes.flatten():
             if ax:
-                ax.set_facecolor(card_bg); ax.tick_params(colors=muted_col,labelsize=8)
+                ax.set_facecolor(card_bg)
+                ax.tick_params(colors=muted_col, labelsize=8)
                 for s in ax.spines.values(): s.set_edgecolor('#ffffff18')
-        st.pyplot(pp.fig, use_container_width=True); plt.close(pp.fig)
+        st.pyplot(pp.fig, use_container_width=True)
+        plt.close(pp.fig)
 
     elif analysis_tab == "3D Scatter":
         import matplotlib.pyplot as plt
-        fig3d=plt.figure(figsize=(10,7)); fig3d.patch.set_facecolor(dark_bg)
-        ax3d=fig3d.add_subplot(111,projection='3d'); ax3d.set_facecolor(card_bg)
-        for cat,color in cat_colors.items():
-            idx=dataset['Car Category']==cat
-            ax3d.scatter(dataset.loc[idx,'Engine Capacity'],dataset.loc[idx,'Horsepower'],
-                         dataset.loc[idx,'Performance (0-100s)'],c=color,label=cat,s=18,alpha=0.7)
-        ax3d.set_xlabel('Engine Capacity',color=muted_col,fontsize=9)
-        ax3d.set_ylabel('Horsepower',color=muted_col,fontsize=9)
-        ax3d.set_zlabel('0-100s',color=muted_col,fontsize=9)
-        ax3d.tick_params(colors=muted_col,labelsize=7)
-        ax3d.set_title('3D Feature Distribution',color=text_col,fontsize=13)
-        ax3d.legend(facecolor=card_bg,labelcolor=text_col,fontsize=9,loc='upper left',framealpha=0.5)
-        ax3d.xaxis.pane.fill=ax3d.yaxis.pane.fill=ax3d.zaxis.pane.fill=False
-        st.pyplot(fig3d, use_container_width=True); plt.close(fig3d)
+        fig3d = plt.figure(figsize=(10, 7))
+        fig3d.patch.set_facecolor(dark_bg)
+        ax3d = fig3d.add_subplot(111, projection='3d')
+        ax3d.set_facecolor(card_bg)
+        for cat, color in cat_colors.items():
+            idx = dataset['Car Category'] == cat
+            ax3d.scatter(dataset.loc[idx,'Engine Capacity'],
+                         dataset.loc[idx,'Horsepower'],
+                         dataset.loc[idx,'Performance (0-100s)'],
+                         c=color, label=cat, s=18, alpha=0.7)
+        ax3d.set_xlabel('Engine Capacity', color=muted_col, fontsize=9)
+        ax3d.set_ylabel('Horsepower',      color=muted_col, fontsize=9)
+        ax3d.set_zlabel('0-100s',          color=muted_col, fontsize=9)
+        ax3d.tick_params(colors=muted_col, labelsize=7)
+        ax3d.set_title('3D Feature Distribution', color=text_col, fontsize=13)
+        ax3d.legend(facecolor=card_bg, labelcolor=text_col, fontsize=9,
+                    loc='upper left', framealpha=0.5)
+        ax3d.xaxis.pane.fill = False
+        ax3d.yaxis.pane.fill = False
+        ax3d.zaxis.pane.fill = False
+        st.pyplot(fig3d, use_container_width=True)
+        plt.close(fig3d)
 
     else:
-        import matplotlib.pyplot as plt, itertools
+        import matplotlib.pyplot as plt
+        import itertools
         from matplotlib.colors import LinearSegmentedColormap
         from sklearn.metrics import confusion_matrix
-        model_map={"Confusion Matrix – SVM":svm_model,"Confusion Matrix – KNN":knn_model,"Confusion Matrix – DT":dt_model}
-        y_pred_cm=model_map[analysis_tab].predict(X_test_sc)
-        cm=confusion_matrix(y_test,y_pred_cm); classes=le.classes_
-        fig_cm,ax_cm=plt.subplots(figsize=(8,6)); fig_cm.patch.set_facecolor(dark_bg); ax_cm.set_facecolor(card_bg)
-        cmap_c=LinearSegmentedColormap.from_list('c',['#131629','#7c6ff7'],N=256)
-        im=ax_cm.imshow(cm,interpolation='nearest',cmap=cmap_c)
-        plt.colorbar(im,ax=ax_cm).ax.yaxis.set_tick_params(color=muted_col)
-        tk=np.arange(len(classes))
-        ax_cm.set_xticks(tk); ax_cm.set_xticklabels(classes,rotation=35,ha='right',color=muted_col)
-        ax_cm.set_yticks(tk); ax_cm.set_yticklabels(classes,color=muted_col)
-        thresh=cm.max()/2.
-        for i,j in itertools.product(range(cm.shape[0]),range(cm.shape[1])):
-            ax_cm.text(j,i,format(cm[i,j],'d'),ha='center',va='center',
-                       color='white' if cm[i,j]>thresh else muted_col,fontsize=12,fontweight='bold')
-        ax_cm.set_ylabel('True Label',color=muted_col); ax_cm.set_xlabel('Predicted Label',color=muted_col)
-        ax_cm.set_title(analysis_tab.replace('Confusion Matrix – ','')+ ' Confusion Matrix',color=text_col,fontsize=13,pad=12)
+
+        model_map = {
+            "Confusion Matrix – SVM": svm_model,
+            "Confusion Matrix – KNN": knn_model,
+            "Confusion Matrix – DT":  dt_model
+        }
+        y_pred_cm = model_map[analysis_tab].predict(X_test_sc)
+        cm        = confusion_matrix(y_test, y_pred_cm)
+        classes   = le.classes_
+
+        fig_cm, ax_cm = plt.subplots(figsize=(8, 6))
+        fig_cm.patch.set_facecolor(dark_bg)
+        ax_cm.set_facecolor(card_bg)
+        cmap_c = LinearSegmentedColormap.from_list('c', ['#131629','#7c6ff7'], N=256)
+        im = ax_cm.imshow(cm, interpolation='nearest', cmap=cmap_c)
+        plt.colorbar(im, ax=ax_cm).ax.yaxis.set_tick_params(color=muted_col)
+
+        tk = np.arange(len(classes))
+        ax_cm.set_xticks(tk)
+        ax_cm.set_xticklabels(classes, rotation=35, ha='right', color=muted_col)
+        ax_cm.set_yticks(tk)
+        ax_cm.set_yticklabels(classes, color=muted_col)
+
+        thresh = cm.max() / 2.
+        for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+            ax_cm.text(j, i, format(cm[i,j], 'd'), ha='center', va='center',
+                       color='white' if cm[i,j] > thresh else muted_col,
+                       fontsize=12, fontweight='bold')
+
+        ax_cm.set_ylabel('True Label',      color=muted_col)
+        ax_cm.set_xlabel('Predicted Label', color=muted_col)
+        ax_cm.set_title(
+            analysis_tab.replace('Confusion Matrix – ', '') + ' Confusion Matrix',
+            color=text_col, fontsize=13, pad=12
+        )
         for s in ax_cm.spines.values(): s.set_edgecolor('#ffffff18')
-        st.pyplot(fig_cm, use_container_width=True); plt.close(fig_cm)
-        st.info(f"Model Accuracy: **{accuracy_score(y_test,y_pred_cm)*100:.2f}%**")
+        st.pyplot(fig_cm, use_container_width=True)
+        plt.close(fig_cm)
+        st.info(f"Model Accuracy: **{accuracy_score(y_test, y_pred_cm)*100:.2f}%**")
 
 # ═══════════════ TAB 4 — LIVE API DATA ═══════════════
 with tab_live:
     st.markdown("### 🌐 Live Car Data from CarQuery API")
-    st.markdown(f"<p style='color:#8892a4'>Fetched <strong style='color:#7c6ff7'>{len(df_api)}</strong> real car trims · Refreshes every 24 hours · No API key required</p>", unsafe_allow_html=True)
+    st.markdown(
+        f"<p style='color:#8892a4'>Fetched <strong style='color:#7c6ff7'>{n_cars}</strong> "
+        f"real car trims · Refreshes every 24 hours · No API key required</p>",
+        unsafe_allow_html=True
+    )
     st.dataframe(
         df_api[['Make','Model','Engine Capacity','Horsepower','Fuel Type','Acceleration']].reset_index(drop=True),
         use_container_width=True
     )
     col1, col2, col3 = st.columns(3)
-    with col1: st.metric("Total Cars", len(df_api))
+    with col1: st.metric("Total Cars", n_cars)
     with col2: st.metric("Avg HP",     f"{df_api['Horsepower'].mean():.0f}")
     with col3: st.metric("Makes",      df_api['Make'].nunique())
